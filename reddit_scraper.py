@@ -88,6 +88,15 @@ class RedditScraper:
                 
                 data = response.json()
                 posts = self._extract_posts(data, days_ago)
+                # Download replies for each post
+                for post in posts:
+                    post_id = post.get('permalink', '').split('/comments/')
+                    if len(post_id) > 1:
+                        post_short_id = post_id[1].split('/')[0]
+                        replies = self._fetch_replies(subreddit, post_short_id, limit)
+                        post['replies'] = replies
+                    else:
+                        post['replies'] = []
                 
                 self.logger.info(f"Successfully scraped {len(posts)} posts from r/{subreddit} (past {self.default_days_ago} days)")
                 all_posts[subreddit] = posts
@@ -137,6 +146,37 @@ class RedditScraper:
         
         return posts
     
+    def _fetch_replies(self, subreddit: str, post_id: str, limit: int) -> List[Dict[str, Any]]:
+        """
+        Fetch replies (comments) for a given post.
+        """
+        url = f"{self.base_url}/{subreddit}/comments/{post_id}.json?limit={limit}"
+        try:
+            response = requests.get(url, headers=self.headers)
+            response.raise_for_status()
+            data = response.json()
+            # Comments are in the second element of the returned list
+            comments = data[1]['data']['children']
+            replies = []
+            for comment in comments:
+                if comment['kind'] != 't1':
+                    continue
+                cdata = comment['data']
+                replies.append({
+                    'author': cdata.get('author', ''),
+                    'body': cdata.get('body', ''),
+                    'score': cdata.get('score', 0),
+                    'created_utc': cdata.get('created_utc', 0),
+                    'created_date': datetime.fromtimestamp(cdata.get('created_utc', 0)).strftime('%Y-%m-%d %H:%M:%S'),
+                    'permalink': f"https://reddit.com{cdata.get('permalink', '')}"
+                })
+                if len(replies) >= limit:
+                    break
+            return replies
+        except Exception as e:
+            self.logger.error(f"Error fetching replies for post {post_id} in r/{subreddit}: {e}")
+            return []
+
     def save_to_json(self, posts: Dict[str, List[Dict]], output_dir: str = None) -> Dict[str, str]:
         """
         Save each subreddit's posts to its own JSON file.
