@@ -60,4 +60,5 @@ venv.bak/
 # Project specific
 *.log
 *.json
+!config.json
 !requirements.txt
