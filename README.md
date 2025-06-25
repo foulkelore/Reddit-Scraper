@@ -1,10 +1,10 @@
-# ZedEditor Reddit Scraper
+# Reddit Scraper
 
-A Python tool to scrape posts from the r/ZedEditor subreddit on Reddit.
+A Python tool to scrape posts from the a list of subreddits on Reddit.
 
 ## Features
 
-- Scrape posts from r/ZedEditor subreddit
+- Scrape posts from a list of subreddits
 - Support for different sorting methods (hot, new, rising, top)
 - Configurable post limit
 - JSON output with post details
@@ -52,7 +52,7 @@ The scraper saves data in JSON format with the following fields for each post:
 
 ## Logs
 
-Logs are saved to `zededitor_scraper.log` and also displayed in the console.
+Logs are saved to `reddit_scraper.log` and also displayed in the console.
 
 ## Note
 
