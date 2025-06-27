@@ -5,12 +5,13 @@ A Python tool to scrape posts and replies from a list of subreddits on Reddit.
 ## Features
 
 - Scrape posts from a configurable list of subreddits (see `config.json`)
-- Download replies (comments) for each post (up to the same limit as posts)
+- Download replies (comments) for each post (up to the same limit as posts, configurable)
 - Support for different sorting methods (`hot`, `new`, `rising`, `top`, `controversial`)
 - Configurable post and reply limit
 - Configurable time window for posts (e.g., last N days)
 - JSON output with post and reply details, saved in a `results` directory
 - Logging functionality with optional log clearing
+- Optionally delete all files in the `results` directory at the start of each run
 
 ## Installation
 
@@ -49,14 +50,25 @@ Edit `config.json` to set:
 - `limit`: Number of posts (and replies) per subreddit
 - `days_ago`: Only include posts from the last N days
 - `clear_logs`: Set to `true` to clear the log file at the start of each run
+- `sleep_seconds`: Number of seconds to sleep between requests (default: 2)
+- `get_post_replies`: Set to `true` to fetch replies for each post, `false` to skip replies
+- `delete_results`: Set to `true` to delete all files in the `results` directory at the start of each run
 
 Example:
 ```json
 {
-  "subreddits": ["ZedEditor", "Python", "typescript"],
+  "subreddits": [
+    "vscode",
+    "node",
+    "typescript",
+    "Python"
+  ],
   "limit": 25,
   "days_ago": 7,
-  "clear_logs": true
+  "clear_logs": true,
+  "sleep_seconds": 1,
+  "get_post_replies": true,
+  "delete_results": true
 }
 ```
 
@@ -75,6 +87,7 @@ Each post includes:
 - permalink
 - flair
 - is_video
+
 - replies: a list of reply objects, each with:
   - author
   - body
