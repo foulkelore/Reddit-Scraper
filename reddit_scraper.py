@@ -30,7 +30,7 @@ class RedditScraper:
         # Try to load subreddits from config file
         self.config = self._load_config(config_file)
         if subreddits is None:
-            self.subreddits = self.config.get('subreddits', ['ZedEditor'])
+            self.subreddits = self.config.get('subreddits', ['Python'])
         else:
             self.subreddits = subreddits
             
@@ -40,6 +40,7 @@ class RedditScraper:
         self.sleep_seconds = self.config.get('sleep_seconds', 2)  # Default to 2 seconds if not specified
         self.get_post_replies = self.config.get('get_post_replies', True)  # Default to True
         self.delete_results = self.config.get('delete_results', False)  # Default to False
+
     def _load_config(self, config_file):
         """Load configuration from JSON file."""
         try:
