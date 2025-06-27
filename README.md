@@ -87,7 +87,6 @@ Each post includes:
 - permalink
 - flair
 - is_video
-
 - replies: a list of reply objects, each with:
   - author
   - body
