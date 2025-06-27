@@ -14,6 +14,7 @@ from typing import Any, Dict, List
 import requests
 
 LOG_FILE = 'reddit_scraper.log'
+RESULTS_DIR = 'results'
 
 class RedditScraper:
     """A class to scrape Reddit posts from multiple subreddits."""
@@ -36,7 +37,9 @@ class RedditScraper:
         self.default_limit = self.config.get('limit', 25)
         self.default_days_ago = self.config.get('days_ago', 7)  # Default to 7 days if not specified
         self.clear_logs = self.config.get('clear_logs', False)
-    
+        self.sleep_seconds = self.config.get('sleep_seconds', 2)  # Default to 2 seconds if not specified
+        self.get_post_replies = self.config.get('get_post_replies', True)  # Default to True
+        self.delete_results = self.config.get('delete_results', False)  # Default to False
     def _load_config(self, config_file):
         """Load configuration from JSON file."""
         try:
@@ -88,21 +91,25 @@ class RedditScraper:
                 
                 data = response.json()
                 posts = self._extract_posts(data, days_ago)
-                # Download replies for each post
-                for post in posts:
-                    post_id = post.get('permalink', '').split('/comments/')
-                    if len(post_id) > 1:
-                        post_short_id = post_id[1].split('/')[0]
-                        replies = self._fetch_replies(subreddit, post_short_id, limit)
-                        post['replies'] = replies
-                    else:
+                # Download replies for each post if enabled
+                if self.get_post_replies:
+                    for post in posts:
+                        post_id = post.get('permalink', '').split('/comments/')
+                        if len(post_id) > 1:
+                            post_short_id = post_id[1].split('/')[0]
+                            replies = self._fetch_replies(subreddit, post_short_id, limit)
+                            post['replies'] = replies
+                        else:
+                            post['replies'] = []
+                else:
+                    for post in posts:
                         post['replies'] = []
                 
                 self.logger.info(f"Successfully scraped {len(posts)} posts from r/{subreddit} (past {self.default_days_ago} days)")
                 all_posts[subreddit] = posts
                 
                 # Be nice to Reddit API - add delay between requests
-                time.sleep(1)
+                time.sleep(self.sleep_seconds)
                 
             except requests.exceptions.RequestException as e:
                 self.logger.error(f"Error scraping r/{subreddit}: {e}")
@@ -152,6 +159,8 @@ class RedditScraper:
         """
         url = f"{self.base_url}/{subreddit}/comments/{post_id}.json?limit={limit}"
         try:
+            # Add a delay to reduce the chance of hitting rate limits
+            time.sleep(self.sleep_seconds)
             response = requests.get(url, headers=self.headers)
             response.raise_for_status()
             data = response.json()
@@ -234,6 +243,17 @@ def setup_logging():
         ]
     )
 
+def delete_results_files(results_dir=RESULTS_DIR):
+    """Delete all files in the results directory."""
+    if os.path.exists(results_dir):
+        for filename in os.listdir(results_dir):
+            file_path = os.path.join(results_dir, filename)
+            if os.path.isfile(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    print(f"Could not delete {file_path}: {e}")
+
 def main():
     """Main function to run the Reddit scraper."""
     parser = argparse.ArgumentParser(description='Reddit Scraper')
@@ -256,7 +276,7 @@ def main():
     
     args = parser.parse_args()
     
-    # Load config to check clear_logs before setting up logging
+    # Load config to check clear_logs and delete_results before setting up logging
     config_path = args.config if hasattr(args, 'config') else 'config.json'
     try:
         with open(config_path, 'r') as f:
@@ -264,10 +284,14 @@ def main():
     except Exception:
         config = {}
     clear_logs = config.get('clear_logs', False)
+    delete_results = config.get('delete_results', False)
     if clear_logs and os.path.exists(LOG_FILE):
         with open(LOG_FILE, 'w'):
             pass  # Truncate the file
         print(f"Log file '{LOG_FILE}' cleared as per config.")
+    if delete_results:
+        delete_results_files()
+        print(f"All files in '{RESULTS_DIR}' have been deleted as per config.")
 
     setup_logging()
     logging.info("Starting Reddit scraper")
