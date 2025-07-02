@@ -2,6 +2,27 @@
 
 A Python tool to scrape posts and replies from a list of subreddits on Reddit.
 
+## Project Structure
+
+```
+Reddit-Scraper/
+├── src/                    # Source code
+│   ├── __init__.py        # Package initialization
+│   └── reddit_scraper.py  # Main scraper code
+├── scripts/               # Executable scripts
+│   ├── run_scraper.py     # CLI script to run the scraper
+│   └── example_usage.py   # Example library usage
+├── tests/                 # Unit tests
+│   ├── test_integration.py
+│   ├── test_reddit_scraper.py
+│   ├── test_utils.py
+│   └── conftest.py
+├── results/               # Output directory (auto-created)
+├── config.json           # Configuration file
+├── requirements.txt      # Python dependencies
+└── README.md            # This file
+```
+
 ## Features
 
 - Scrape posts from a configurable list of subreddits (see `config.json`)
@@ -23,15 +44,37 @@ pip install -r requirements.txt
 
 ## Usage
 
+### Command Line Interface
+
 Basic usage:
 ```bash
-python reddit_scraper.py
+python scripts/run_scraper.py
 ```
 
 With options:
 ```bash
-python reddit_scraper.py --sort new --limit 50
+python scripts/run_scraper.py --sort new --limit 50
 ```
+
+### As a Python Library
+
+```python
+from src.reddit_scraper import RedditScraper, setup_logging
+
+# Set up logging
+setup_logging()
+
+# Create scraper instance
+scraper = RedditScraper(subreddits=['Python', 'programming'])
+
+# Scrape posts
+posts = scraper.scrape_posts(sort_type='hot', limit=10)
+
+# Save results
+saved_files = scraper.save_to_json(posts)
+```
+
+See `scripts/example_usage.py` for a complete example.
 
 ### Command Line Arguments
 
